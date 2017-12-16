@@ -1,5 +1,6 @@
-# tskserver-notifications-bot
-Post notification by Twitter and Discord when user logins to the tskserver.
+# tskserver-notification-bot
+Post notification to Twitter and Discord on login, server up, server down.
+This bot uses https://github.com/k5342/minecraft-status-check-http-api to fetch Minecraft server status.
 
 ## Installation
 1. clone this repository
