@@ -156,18 +156,18 @@ class Notify
   end
   
   def user_login(onlines_diff, onlines, last_checked_at, prefix = '')
-    @twitter.user_login(onlines_diff, onlines, last_checked_at, prefix)
     @discord.user_login(onlines_diff, onlines, last_checked_at, prefix)
+    @twitter.user_login(onlines_diff, onlines, last_checked_at, prefix)
   end
   
   def server_down(name, body, status, last_checked_at)
-    @twitter.server_down(name, body, status, last_checked_at)
     @discord.server_down(name, body, status, last_checked_at)
+    @twitter.server_down(name, body, status, last_checked_at)
   end
   
   def server_up(name, body, status, last_checked_at)
-    @twitter.server_up(name, body, status, last_checked_at)
     @discord.server_up(name, body, status, last_checked_at)
+    @twitter.server_up(name, body, status, last_checked_at)
   end
 end
 
@@ -181,33 +181,39 @@ loop do
     data.each do |k, v|
       name, body, status, last_checked_at = k, v[:body], v[:status], v[:last_checked_at]
       
-      case status
-      when 'online'
-        if @status_before
-          if @status_before != status
-            @notify.server_up(name, body, status, last_checked_at)
+      begin
+        case status
+        when 'online'
+          if @status_before
+            if @status_before != status
+              @notify.server_up(name, body, status, last_checked_at)
+            end
           end
-        end
-        
-        @onlines = body[:players][:sample] || []
-        if @onlines_before
-          onlines_diff = @onlines - @onlines_before
           
-          if onlines_diff.size > 0
-            new_logins = onlines_diff.map{|x| x[:name]}
-            @notify.user_login(new_logins, @onlines, last_checked_at)
+          @onlines = body[:players][:sample] || []
+          if @onlines_before
+            onlines_diff = @onlines - @onlines_before
+            
+            if onlines_diff.size > 0
+              new_logins = onlines_diff.map{|x| x[:name]}
+              @notify.user_login(new_logins, @onlines, last_checked_at)
+            end
+          end
+          @onlines_before = @onlines
+        else
+          if @status_before
+            if @status_before != status
+              @notify.server_down(name, body, status, last_checked_at)
+            end
           end
         end
-        @onlines_before = @onlines
-      else
-        if @status_before
-          if @status_before != status
-            @notify.server_down(name, body, status, last_checked_at)
-          end
-        end
+      rescue => e
+        pp e
+        puts e.backtrace
+      ensure
+        @status_before = status
       end
-      
-      @status_before = status
+        
     end
   rescue => e
     pp e
