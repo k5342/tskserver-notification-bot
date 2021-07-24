@@ -2,8 +2,8 @@
 source "https://rubygems.org"
 
 # gem "rails"
-gem 'twitter', '4.8.1'
+gem 'twitter', '~> 7.0.0'
 
-gem 'discordrb'
+gem 'discordrb', '~> 3.4.0'
 gem 'httpclient'
 gem 'dotenv'
