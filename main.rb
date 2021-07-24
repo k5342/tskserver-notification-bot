@@ -153,6 +153,8 @@ class Notify
       config.access_token_secret = ENV['TWITTER_OAUTH_TOKEN_SECRET']
     end 
     @twitter = Tweet.new(twitter)
+    @heartbeat_client = HTTPClient.new
+    @heartbeat_url = ENV['HEARTBEAT_URL'] || nil
   end
   
   def user_login(onlines_diff, onlines, last_checked_at, prefix = '')
@@ -168,6 +170,12 @@ class Notify
   def server_up(name, body, status, last_checked_at)
     @discord.server_up(name, body, status, last_checked_at)
     @twitter.server_up(name, body, status, last_checked_at)
+  end
+  
+  def heartbeat()
+    if @heartbeat_url
+      @heartbeat_client.get(@heartbeat_url)
+    end
   end
 end
 
@@ -212,7 +220,8 @@ loop do
       ensure
         @status_before = status
       end
-        
+      
+      @notify.heartbeat()
     end
   rescue => e
     pp e
