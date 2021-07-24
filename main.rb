@@ -39,13 +39,13 @@ class Discord
   end
   
   def user_login(onlines_diff, onlines, last_checked_at, prefix = '')
-    message = "#{onlines_diff.sort.map{|x| "`#{x}`"}.join(', ')} logined to the server."
+    message = "#{onlines_diff.sort_by{|x| x[:id] }.map{|x| "`#{x[:name]}`"}.join(', ')} logined to the server."
     
     embed = Discordrb::Webhooks::Embed.new(
       title: 'Minecraft',
       description: "tskserver status",
       url: 'https://mc.ksswre.net/status',
-      thumbnail: Discordrb::Webhooks::EmbedThumbnail.new(url: "https://crafatar.com/renders/body/#{onlines_diff.sort.first}"),
+      thumbnail: Discordrb::Webhooks::EmbedThumbnail.new(url: "https://crafatar.com/renders/body/#{onlines_diff.first[:id]}"),
       colour: 0x008040,
       fields: [
         Discordrb::Webhooks::EmbedField.new(
@@ -195,8 +195,7 @@ loop do
             onlines_diff = @onlines - @onlines_before
             
             if onlines_diff.size > 0
-              new_logins = onlines_diff.map{|x| x[:name]}
-              @notify.user_login(new_logins, @onlines, last_checked_at)
+              @notify.user_login(onlines_diff, @onlines, last_checked_at)
             end
           end
           @onlines_before = @onlines
