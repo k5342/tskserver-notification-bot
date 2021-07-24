@@ -153,7 +153,7 @@ class Notify
       config.access_token_secret = ENV['TWITTER_OAUTH_TOKEN_SECRET']
     end 
     @twitter = Tweet.new(twitter)
-    @heartbeat_last_sent_at = -1
+    @heartbeat_last_sent_at = Time.at(0)
     @heartbeat_client = HTTPClient.new
     @heartbeat_url = ENV['HEARTBEAT_URL'] || nil
   end
@@ -175,7 +175,7 @@ class Notify
   
   def heartbeat()
     if @heartbeat_url
-      if Time.now.to_i - @heartbeat_last_sent_at >= 60
+      if Time.now.to_i - @heartbeat_last_sent_at.to_i >= 60
         @heartbeat_client.get(@heartbeat_url)
         @heartbeat_last_sent_at = Time.now
       end
