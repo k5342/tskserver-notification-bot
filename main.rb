@@ -162,9 +162,9 @@ class Notify
     @twitter.user_login(e)
   end
   
-  def server_down(name, body, status, last_checked_at)
-    @discord.server_down(name, body, status, last_checked_at)
-    @twitter.server_down(name, body, status, last_checked_at)
+  def server_down(e)
+    @discord.server_down(e)
+    @twitter.server_down(e)
   end
   
   def server_up(event)
