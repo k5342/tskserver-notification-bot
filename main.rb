@@ -167,7 +167,7 @@ class Notify
     @twitter.server_down(e)
   end
   
-  def server_up(event)
+  def server_up(e)
     @discord.server_up(e)
     @twitter.server_up(e)
   end
