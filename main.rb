@@ -197,7 +197,7 @@ loop do
       if name == 'tskserver'
         @servers[name] ||= ServerInfo.new(
           name: name,
-          host: mc.ksswre.net,
+          host: 'mc.ksswre.net',
           website_url: 'https://mc.ksswre.net',
           infos: v[:body],
         )
