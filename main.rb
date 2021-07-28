@@ -5,29 +5,28 @@ require 'httpclient'
 require 'pp'
 require 'dotenv/load'
 
+require_relative './events'
+require_relative './serverinfo'
+
 class Tweet
   def initialize(twitter)
     @twitter = twitter
   end
   
-  def user_login(onlines_diff, onlines, last_checked_at, prefix = '')
-    tweet("現在 #{onlines.size} 人がオンラインです。", last_checked_at)
+  def user_login(event)
+    tweet("現在 #{event.onlines.size} 人がオンラインです。", event.last_checked_at)
   end
   
-  def server_down(name, body, status, last_checked_at)
-    tweet("サーバが落ちました。", last_checked_at)
+  def server_down(event)
+    tweet("サーバが落ちました。", event.last_checked_at)
   end
   
-  def server_up(name, body, status, last_checked_at)
-    tweet("サーバが起動しました。", last_checked_at)
+  def server_up(event)
+    tweet("サーバが起動しました。", event.last_checked_at)
   end
   
   private
   def tweet(message, last_checked_at = Time.now, prefix = '')
-    if prefix && !prefix.empty?
-      message = [prefix, message].join(' ')
-    end
-    
     @twitter.update([message, "[#{last_checked_at.to_s}]", '#tskserver'].join(' '))
   end
 end
@@ -38,24 +37,24 @@ class Discord
     @channel_id = channel_id
   end
   
-  def user_login(onlines_diff, onlines, last_checked_at, prefix = '')
-    message = "#{onlines_diff.sort_by{|x| x[:id] }.map{|x| "`#{x[:name]}`"}.join(', ')} logined to the server."
+  def user_login(event)
+    message = "#{event.onlines_diff.sort_by{|x| x[:id] }.map{|x| "`#{x[:name]}`"}.join(', ')} logined to the server."
     
     embed = Discordrb::Webhooks::Embed.new(
       title: 'Minecraft',
-      description: "tskserver status",
-      url: 'https://mc.ksswre.net/status',
-      thumbnail: Discordrb::Webhooks::EmbedThumbnail.new(url: "https://crafatar.com/renders/body/#{onlines_diff.first[:id]}"),
+      description: "#{event.server.name} status",
+      url: event.server.website_url, # TODO: make as optional
+      thumbnail: Discordrb::Webhooks::EmbedThumbnail.new(url: "https://crafatar.com/renders/body/#{event.onlines_diff.first[:id]}"),
       colour: 0x008040,
       fields: [
         Discordrb::Webhooks::EmbedField.new(
           name: 'Onlines Count',
-          value: onlines.size,
+          value: event.onlines.size,
           inline: true
         ),
         Discordrb::Webhooks::EmbedField.new(
           name: 'Onlines',
-          value: onlines.map{|x| "`#{x[:name]}`"}.join(', '),
+          value: event.onlines.map{|x| "`#{x[:name]}`"}.join(', '),
           inline: true,
         ),
       ],
@@ -63,63 +62,63 @@ class Discord
         url: "https://graph.ksswre.net/tskserver?#{Time.now.to_i}"
       ),
       footer: Discordrb::Webhooks::EmbedFooter.new(
-        text: "last checked at #{last_checked_at.to_s}"
+        text: "last checked at #{event.last_checked_at.to_s}"
       )
     )
     
     discord_post(message, embed)
   end
   
-  def server_down(name, body, status, last_checked_at)
-    message = "#{name} seems to be down"
+  def server_down(event)
+    message = "#{event.server.name} seems to be down"
     
     embed = Discordrb::Webhooks::Embed.new(
       title: 'Minecraft',
-      description: "#{name} status",
-      url: 'https://mc.ksswre.net/',
+      description: "#{event.server.name} status",
+      url: event.server.website_url, # TODO: make as optional
       colour: 0x804000,
       fields: [
         Discordrb::Webhooks::EmbedField.new(
           name: 'Status',
-          value: body[:error],
+          value: event.infos[:error],
           inline: true
         ),
         Discordrb::Webhooks::EmbedField.new(
           name: 'Detail',
-          value: body[:detail],
+          value: event.infos[:detail],
           inline: true
         ),
       ],
       footer: Discordrb::Webhooks::EmbedFooter.new(
-        text: "last checked at #{last_checked_at.to_s}"
+        text: "last checked at #{event.last_checked_at.to_s}"
       )
     )
     
     discord_post(message, embed)
   end
   
-  def server_up(name, body, status, last_checked_at)
-    message = "#{name} has been started"
+  def server_up(event)
+    message = "#{event.server.name} has been started"
     
     embed = Discordrb::Webhooks::Embed.new(
       title: 'Minecraft',
-      description: "#{name} status",
-      url: 'https://mc.ksswre.net/',
+      description: "#{event.server.name} status",
+      url: event.server.website_url, # TODO: make as optional
       colour: 0x008040,
       fields: [
         Discordrb::Webhooks::EmbedField.new(
           name: 'Status',
-          value: status,
+          value: 'Online',
           inline: true
         ),
         Discordrb::Webhooks::EmbedField.new(
           name: 'Version',
-          value: body[:version][:name],
+          value: event.server.infos[:version][:name],
           inline: true
         ),
       ],
       footer: Discordrb::Webhooks::EmbedFooter.new(
-        text: "last checked at #{last_checked_at.to_s}"
+        text: "last checked at #{event.last_checked_at.to_s}"
       )
     )
     
@@ -158,9 +157,9 @@ class Notify
     @heartbeat_url = ENV['HEARTBEAT_URL'] || nil
   end
   
-  def user_login(onlines_diff, onlines, last_checked_at, prefix = '')
-    @discord.user_login(onlines_diff, onlines, last_checked_at, prefix)
-    @twitter.user_login(onlines_diff, onlines, last_checked_at, prefix)
+  def user_login(e)
+    @discord.user_login(e)
+    @twitter.user_login(e)
   end
   
   def server_down(name, body, status, last_checked_at)
@@ -168,9 +167,9 @@ class Notify
     @twitter.server_down(name, body, status, last_checked_at)
   end
   
-  def server_up(name, body, status, last_checked_at)
-    @discord.server_up(name, body, status, last_checked_at)
-    @twitter.server_up(name, body, status, last_checked_at)
+  def server_up(event)
+    @discord.server_up(e)
+    @twitter.server_up(e)
   end
   
   def heartbeat()
@@ -183,6 +182,7 @@ class Notify
   end
 end
 
+@servers = {}
 @notify = Notify.new
 @client = HTTPClient.new
 loop do
@@ -193,12 +193,25 @@ loop do
     data.each do |k, v|
       name, body, status, last_checked_at = k, v[:body], v[:status], v[:last_checked_at]
       
+      # NOTE: This is just a workaround due to an insufficient API structure
+      if name == 'tskserver'
+        @servers[name] ||= ServerInfo.new(
+          name: name,
+          host: mc.ksswre.net,
+          website_url: 'https://mc.ksswre.net',
+          infos: v[:body],
+        )
+      end
       begin
         case status
         when 'online'
           if @status_before
             if @status_before != status
-              @notify.server_up(name, body, status, last_checked_at)
+              event = Events::ServerUp.new(
+                server: @servers[name],
+                last_checked_at: last_checked_at,
+              )
+              @notify.server_up(event)
             end
           end
           
@@ -207,14 +220,29 @@ loop do
             onlines_diff = @onlines - @onlines_before
             
             if onlines_diff.size > 0
-              @notify.user_login(onlines_diff, @onlines, last_checked_at)
+              event = Events::UserLogined.new(
+                server: @servers[name],
+                last_checked_at: last_checked_at,
+                onlines_diff: onlines_diff,
+                onlines: onlines,
+              )
+              @notify.user_login(event)
             end
           end
           @onlines_before = @onlines
         else
           if @status_before
             if @status_before != status
-              @notify.server_down(name, body, status, last_checked_at)
+              # TODO: API may include error details in body, remove them after API changes
+              event = Events::ServerDown.new(
+                server: @servers[name],
+                last_checked_at: last_checked_at,
+                infos: {
+                  error: body[:error],
+                  detail: body[:detail],
+                }
+              )
+              @notify.server_down(event)
             end
           end
         end
