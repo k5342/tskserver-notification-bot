@@ -4,7 +4,7 @@ require_relative './standard'
 require_relative '../events'
 
 module Notifier
-  class DiscordNotifier < AbstractNotifier
+  class DiscordNotifier < StandardNotifier
     def initialize(token:, client_id:, channel_id:)
       @bot = Discordrb::Bot.new(
         token: token,

@@ -4,7 +4,7 @@ require_relative './standard'
 require_relative '../events'
 
 module Notifier
-  class Twitter < AbstractNotifier
+  class Twitter < StandardNotifier
     def initialize(consumer_key:, consumer_secret:, access_token:, access_token_secret:)
       @client = Twitter::REST::Client.new do |config|
         config.consumer_key        = consumer_key
