@@ -1,6 +1,7 @@
 require 'httpclient'
 
 require_relative './notifiers/notifier'
+require_relative './events'
 
 class NotifyManager
   def initialize(heartbeat_url: nil)
