@@ -4,7 +4,7 @@ require_relative './standard'
 require_relative '../events'
 
 module Notifier
-  class Twitter < StandardNotifier
+  class TwitterNotifier < StandardNotifier
     def initialize(consumer_key:, consumer_secret:, access_token:, access_token_secret:)
       @client = Twitter::REST::Client.new do |config|
         config.consumer_key        = consumer_key
@@ -12,7 +12,6 @@ module Notifier
         config.access_token        = access_token
         config.access_token_secret = access_token_secret
       end 
-      @tweet = Tweet.new(@client)
     end
     
     def user_login(event)
@@ -29,7 +28,7 @@ module Notifier
     
     private
     def tweet(message, last_checked_at = Time.now, prefix = '')
-      @twitter.update([message, "[#{last_checked_at.to_s}]", '#tskserver'].join(' '))
+      @client.update([message, "[#{last_checked_at.to_s}]", '#tskserver'].join(' '))
     end
   end
 end

@@ -11,8 +11,8 @@ module Notifier
         client_id: client_id,
       )
       @bot.run :async
+      @channel_id = channel_id
       puts "bot invite URL: #{@bot.invite_url}"
-      @client = Discord.new(@bot, channel_id)
     end
     
     def user_login(event)

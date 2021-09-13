@@ -31,7 +31,7 @@ class NotifyManager
   
   def heartbeat()
     if @heartbeat_url
-      if Time.now.to_i - @heartbeat_last_sent_at >= 60
+      if Time.now.to_i - @heartbeat_last_sent_at.to_i >= 60
         @heartbeat_client.get(@heartbeat_url)
         @heartbeat_last_sent_at = Time.now
       end

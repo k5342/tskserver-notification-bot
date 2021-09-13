@@ -12,12 +12,12 @@ require_relative './notifymanager'
 @notify_manager = NotifyManager.new(
   heartbeat_url: ENV['HEARTBEAT_URL']
 )
-@notify_manager.register(Notifier::Discord.new(
+@notify_manager.register(Notifier::DiscordNotifier.new(
   token: ENV['DISCORD_TOKEN'],
   client_id: ENV['DISCORD_CLIENT_ID'],
   channel_id: ENV['DISCORD_NOTIFY_CHANNEL_ID'],
 ))
-@notify_manager.register(Notifier::Twitter.new(
+@notify_manager.register(Notifier::TwitterNotifier.new(
   consumer_key:        ENV['TWITTER_CONSUMER_KEY'],
   consumer_secret:     ENV['TWITTER_CONSUMER_SECRET'],
   access_token:        ENV['TWITTER_OAUTH_TOKEN'],
@@ -35,14 +35,12 @@ loop do
       name, body, status, last_checked_at = k, v[:body], v[:status], v[:last_checked_at]
       
       # NOTE: This is just a workaround due to an insufficient API structure
-      if name == 'tskserver'
-        @servers[name] ||= ServerInfo.new(
-          name: name,
-          host: 'mc.ksswre.net',
-          website_url: 'https://mc.ksswre.net',
-          infos: v[:body],
-        )
-      end
+      @servers[name] = ServerInfo.new(
+        name: name,
+        host: 'mc.ksswre.net',
+        website_url: 'https://mc.ksswre.net',
+        infos: body,
+      )
       begin
         case status
         when 'online'
@@ -65,7 +63,7 @@ loop do
                 server: @servers[name],
                 last_checked_at: last_checked_at,
                 onlines_diff: onlines_diff,
-                onlines: onlines,
+                onlines: @onlines,
               )
               @notify_manager.fire_event(event)
             end
