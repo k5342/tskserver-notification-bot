@@ -16,14 +16,13 @@ module Notifier
     end
     
     def user_login(event)
-      message = "#{event.onlines_diff.sort_by{|x| x[:id] }.map{|x| "`#{x[:name]}`"}.join(', ')} logined to the server."
+      description = "#{event.onlines_diff.sort_by{|x| x[:id] }.map{|x| "`#{x[:name]}`"}.join(', ')} logined to the server."
       
       embed = Discordrb::Webhooks::Embed.new(
-        title: 'Minecraft',
-        description: "#{event.server.name} status",
-        url: event.server.website_url, # TODO: make as optional
+        title: 'User Login',
+        description: description,
         thumbnail: Discordrb::Webhooks::EmbedThumbnail.new(url: "https://crafatar.com/renders/body/#{event.onlines_diff.first[:id]}"),
-        colour: 0x008040,
+        colour: 0x016B7F,
         fields: [
           Discordrb::Webhooks::EmbedField.new(
             name: 'Onlines Count',
@@ -44,17 +43,16 @@ module Notifier
         )
       )
       
-      discord_post(message, embed)
+      discord_post("", embed)
     end
     
     def server_down(event)
-      message = "#{event.server.name} seems to be down"
+      description = "#{event.server.name} seems to be down"
       
       embed = Discordrb::Webhooks::Embed.new(
-        title: 'Minecraft',
-        description: "#{event.server.name} status",
-        url: event.server.website_url, # TODO: make as optional
-        colour: 0x804000,
+        title: 'Server Down',
+        description: description,
+        colour: 0xC10026,
         fields: [
           Discordrb::Webhooks::EmbedField.new(
             name: 'Status',
@@ -63,7 +61,7 @@ module Notifier
           ),
           Discordrb::Webhooks::EmbedField.new(
             name: 'Detail',
-            value: event.infos[:detail],
+            value: "```#{event.infos[:detail]}```",
             inline: true
           ),
         ],
@@ -72,17 +70,16 @@ module Notifier
         )
       )
       
-      discord_post(message, embed)
+      discord_post("", embed)
     end
     
     def server_up(event)
-      message = "#{event.server.name} has been started"
+      description = "#{event.server.name} has been started"
       
       embed = Discordrb::Webhooks::Embed.new(
-        title: 'Minecraft',
-        description: "#{event.server.name} status",
-        url: event.server.website_url, # TODO: make as optional
-        colour: 0x008040,
+        title: 'Server Up',
+        description: description,
+        colour: 0x3AB300,
         fields: [
           Discordrb::Webhooks::EmbedField.new(
             name: 'Status',
@@ -100,7 +97,7 @@ module Notifier
         )
       )
       
-      discord_post(message, embed)
+      discord_post("", embed)
     end
     
     private
