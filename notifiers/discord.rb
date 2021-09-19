@@ -55,7 +55,7 @@ module Notifier
         colour: 0xC10026,
         fields: [
           Discordrb::Webhooks::EmbedField.new(
-            name: 'Status',
+            name: 'Reason',
             value: event.infos[:error],
             inline: true
           ),
